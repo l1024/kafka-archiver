@@ -11,9 +11,9 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.log4j.Logger;
-
 import kafka.message.MessageAndOffset;
+
+import org.apache.log4j.Logger;
 
 
 public class App {
@@ -63,7 +63,7 @@ public class App {
     public void run() {
 
       try {
-        Sink sink = new S3Sink(topic,partition,conf);
+        Sink sink = new S3SequenceFileSink(topic,partition,conf);
         long offset = sink.getMaxCommittedOffset();
         Iterator<MessageAndOffset> messages = new MessageStream(topic,partition,offset,conf);
         while (messages.hasNext()) {
