@@ -11,10 +11,14 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.log4j.Logger;
+
 import kafka.message.MessageAndOffset;
 
 
 public class App {
+
+  private static final Logger logger = Logger.getLogger(App.class);
 
   private static Configuration conf;
   private static ExecutorService pool;
@@ -28,27 +32,29 @@ public class App {
 
     Map<String, Integer> topics = conf.getTopicsAndPartitions();
 
-    List<Worker> workers = new LinkedList<Worker>();
+    List<ArchivingWorker> workers = new LinkedList<ArchivingWorker>();
 
     for (String topic: topics.keySet()) {
       for (int partition=0; partition<topics.get(topic); partition++) {
-        workers.add(new Worker(topic, partition));
+        workers.add(new ArchivingWorker(topic, partition));
       }
     }
 
     pool = Executors.newFixedThreadPool(workers.size());
 
-    for (Worker worker: workers) {
+    logger.info(String.format("Starting workers to archive into %s/%s", conf.getS3Bucket(), conf.getS3Prefix()));
+    for (ArchivingWorker worker: workers) {
+      logger.info(String.format("  %s", worker));
       pool.submit(worker);
     }
   }
 
-  private static class Worker implements Runnable {
+  private static class ArchivingWorker implements Runnable {
 
     private final String topic;
     private final int partition;
 
-    private Worker(String topic, int partition) {
+    private ArchivingWorker(String topic, int partition) {
       this.topic = topic;
       this.partition = partition;
     }
@@ -67,6 +73,11 @@ public class App {
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
+    }
+
+    @Override
+    public String toString() {
+      return String.format("ArchivingWorker(topic=%s,partition=%d)", topic, partition);
     }
   }
 
