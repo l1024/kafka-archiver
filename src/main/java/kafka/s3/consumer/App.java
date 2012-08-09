@@ -47,12 +47,23 @@ public class App {
       logger.info(String.format("  %s", worker));
       pool.submit(worker);
     }
+
+    while (true) {
+        Thread.sleep(60000);
+        for (ArchivingWorker worker: workers) {
+            logger.info(worker.toString());
+        }
+    }
+
   }
 
   private static class ArchivingWorker implements Runnable {
 
     private final String topic;
     private final int partition;
+
+    private long messageCount = 0;
+    private long totalMessageSize = 0;
 
     private ArchivingWorker(String topic, int partition) {
       this.topic = topic;
@@ -68,7 +79,8 @@ public class App {
         Iterator<MessageAndOffset> messages = new MessageStream(topic,partition,offset,conf);
         while (messages.hasNext()) {
           MessageAndOffset messageAndOffset = messages.next();
-          sink.append(messageAndOffset);
+          totalMessageSize += sink.append(messageAndOffset);
+          messageCount += 1;
         }
       } catch (Exception e) {
         logger.error(e);
@@ -77,7 +89,7 @@ public class App {
 
     @Override
     public String toString() {
-      return String.format("ArchivingWorker(topic=%s,partition=%d)", topic, partition);
+      return String.format("ArchivingWorker(topic=%s,partition=%d,messageCount=%d,totalMessageSize=%d)", topic, partition, messageCount, totalMessageSize);
     }
   }
 

@@ -43,7 +43,7 @@ class S3SequenceFileSink extends S3SinkBase implements Sink {
 	}
 
 	@Override
-	public void append(MessageAndOffset messageAndOffset) throws IOException {
+	public long append(MessageAndOffset messageAndOffset) throws IOException {
 		int messageSize = messageAndOffset.message().payload().remaining();
 		logger.debug("Appending message with size: " + messageSize);
 
@@ -68,6 +68,8 @@ class S3SequenceFileSink extends S3SinkBase implements Sink {
 		bytesWritten += messageSize;
 
 		endOffset = messageAndOffset.offset();
+
+		return messageSize;
 	}
 
 	public SequenceFile.Writer createWriter(OutputStream outputStream) throws IOException {

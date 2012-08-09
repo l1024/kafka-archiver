@@ -6,7 +6,7 @@ import kafka.message.MessageAndOffset;
 
 interface Sink {
 
-	public abstract void append(MessageAndOffset messageAndOffset)
+	public abstract long append(MessageAndOffset messageAndOffset)
 			throws IOException;
 
 	public abstract long getMaxCommittedOffset();
