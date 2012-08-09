@@ -70,8 +70,8 @@ public class App {
           MessageAndOffset messageAndOffset = messages.next();
           sink.append(messageAndOffset);
         }
-      } catch (IOException e) {
-        throw new RuntimeException(e);
+      } catch (Exception e) {
+        logger.error(e);
       }
     }
 

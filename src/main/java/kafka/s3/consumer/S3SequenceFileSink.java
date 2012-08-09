@@ -1,19 +1,18 @@
 package kafka.s3.consumer;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
 import kafka.message.MessageAndOffset;
-
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SequenceFile;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.compress.BZip2Codec;
 import org.apache.log4j.Logger;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 class S3SequenceFileSink extends S3SinkBase implements Sink {
 
@@ -39,8 +38,7 @@ class S3SequenceFileSink extends S3SinkBase implements Sink {
 
 		tmpFile = File.createTempFile("s3sink", null);
 		tmpOutputStream = new FileOutputStream(tmpFile);
-		org.apache.hadoop.conf.Configuration hadoopConf = new org.apache.hadoop.conf.Configuration(false);
-		writer = SequenceFile.createWriter(hadoopConf, new FSDataOutputStream(tmpOutputStream, new FileSystem.Statistics("")), LongWritable.class, BytesWritable.class, SequenceFile.CompressionType.NONE, null);
+		writer = createWriter(tmpOutputStream);
 		logger.debug("Created tmpFile: " + tmpFile);
 	}
 
@@ -56,8 +54,7 @@ class S3SequenceFileSink extends S3SinkBase implements Sink {
 			tmpFile.delete();
 			tmpFile = File.createTempFile("s3sink", null);
 			tmpOutputStream = new FileOutputStream(tmpFile);
-			org.apache.hadoop.conf.Configuration hadoopConf = new org.apache.hadoop.conf.Configuration(false);
-			writer = SequenceFile.createWriter(hadoopConf, new FSDataOutputStream(tmpOutputStream, new FileSystem.Statistics("")), LongWritable.class, BytesWritable.class, SequenceFile.CompressionType.NONE, null);
+			writer = createWriter(tmpOutputStream);
 			logger.debug("Created tmpFile: " + tmpFile);
 			startOffset = endOffset;
 			bytesWritten = 0;
@@ -71,5 +68,11 @@ class S3SequenceFileSink extends S3SinkBase implements Sink {
 		bytesWritten += messageSize;
 
 		endOffset = messageAndOffset.offset();
+	}
+
+	public SequenceFile.Writer createWriter(OutputStream outputStream) throws IOException {
+		org.apache.hadoop.conf.Configuration hadoopConf = new org.apache.hadoop.conf.Configuration(false);
+		return SequenceFile.createWriter(hadoopConf, new FSDataOutputStream(outputStream, new FileSystem.Statistics("")), LongWritable.class, BytesWritable.class, SequenceFile.CompressionType.BLOCK, new BZip2Codec());
+
 	}
 }
