@@ -3,3 +3,4 @@ target/
 .idea/
 kafka-s3-consumer.iml
 dependency-reduced-pom.xml
+bundle/tmp

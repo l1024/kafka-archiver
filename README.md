@@ -1,13 +1,24 @@
-kafka-s3-consumer
+kafka-archiver
 =================
 
-Store batched Kafka messages in S3.
+Archive Kafka messages in S3.
+
+Just start a kafka-archiver daemon on each kafka broker.
 
 Build
 
-  mvn package
+```
+$ cd <project root>
+edit config files in ./bundle/config as appropriate
+$ ./bundle.sh
+```
+
+creates ./target/kafka-archiver.tgz
 
 Run
 
-  java -jar kafka-s3-consumer-1.0.jar <props>
-
+```
+$ tar xzf kafka-archiver.tgz
+$ cd kafka-archiver
+$ ./bin/kafka-archiver-start.sh
+```

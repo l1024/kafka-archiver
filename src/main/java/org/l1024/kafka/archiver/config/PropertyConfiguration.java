@@ -1,10 +1,10 @@
-package kafka.s3.consumer;
+package org.l1024.kafka.archiver.config;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
-public class PropertyConfiguration implements Configuration {
+public class PropertyConfiguration extends Configuration {
 
   private final Properties props;
 
@@ -12,10 +12,8 @@ public class PropertyConfiguration implements Configuration {
   private static final String PROP_S3_SECRET_KEY = "s3.secretkey";
   private static final String PROP_S3_BUCKET = "s3.bucket";
   private static final String PROP_S3_PREFIX = "s3.prefix";
-  private static final String PROP_KAFKA_HOST = "kafka.host";
-  private static final String PROP_KAFKA_PORT = "kafka.port";
-  private static final String PROP_KAFKA_BROKER_ID = "kafka.brokerid";
-  private static final String PROP_S3_MAX_OBJECT_SIZE = "s3.maxobjectsize";
+  private static final String PROP_S3_MIN_TOTAL_MESSAGE_SIZE_PER_CHUNK = "s3.mintotalmessagesizeperchunk";
+  private static final String PROP_S3_MAX_COMMIT_INTERVAL = "s3.maxcommitinterval";
   private static final String PROP_KAFKA_MAX_MESSAGE_SIZE = "kafka.maxmessagesize";
   private static final String PROP_KAFKA_TOPICS = "kafka.topics";
 
@@ -60,55 +58,25 @@ public class PropertyConfiguration implements Configuration {
   }
 
   @Override
-  public String getKafkaHost() {
-    String kafkaHost = props.getProperty(PROP_KAFKA_HOST);
-    if (kafkaHost == null || kafkaHost.isEmpty()) {
-      throw new RuntimeException("Invalid property " + PROP_KAFKA_HOST);
-    }
-    return kafkaHost;
-  }
-
-  @Override
-  public int getKafkaPort() {
-    String kafkaPort = props.getProperty(PROP_KAFKA_PORT);
-    if (kafkaPort == null || kafkaPort.isEmpty()) {
-      throw new RuntimeException("Invalid property " + PROP_KAFKA_PORT);
-    }
-    return Integer.valueOf(kafkaPort);
-  }
-
-  @Override
-  public int getKafkaBrokerId() {
-    String kafkaBrokerId = props.getProperty(PROP_KAFKA_BROKER_ID);
-    if (kafkaBrokerId == null || kafkaBrokerId.isEmpty()) {
-      throw new RuntimeException("Invalid property " + PROP_KAFKA_BROKER_ID);
-    }
-    return Integer.valueOf(kafkaBrokerId);
-  }
-
-  @Override
-  public Map<String, Integer> getTopicsAndPartitions() {
-    HashMap<String, Integer> result = new HashMap<String,Integer>();
+  public Set<String> getTopics() {
+    Set<String> result = new HashSet<String>();
     String kafkaTopics = props.getProperty(PROP_KAFKA_TOPICS);
     if (kafkaTopics == null || kafkaTopics.isEmpty()) {
       throw new RuntimeException("Invalid property " + PROP_KAFKA_TOPICS);
     }
-    for (String topics: kafkaTopics.split(",")) {
-      String[] topicPart = topics.split(":");
-      if (result.containsKey(topicPart[0]))
-        throw new RuntimeException("Duplicate topic " + topicPart[0]);
-      result.put(topicPart[0], Integer.valueOf(topicPart[1]));
+    for (String topic: kafkaTopics.split(",")) {
+      result.add(topic);
     }
     return result;
   }
 
   @Override
-  public int getS3MaxObjectSize() {
-    String maxBatchObjectSize = props.getProperty(PROP_S3_MAX_OBJECT_SIZE);
-    if (maxBatchObjectSize == null || maxBatchObjectSize.isEmpty()) {
-      return 256;
+  public long getMinTotalMessageSizePerChunk() {
+    String minTotalMessageSizePerChunk = props.getProperty(PROP_S3_MIN_TOTAL_MESSAGE_SIZE_PER_CHUNK);
+    if (minTotalMessageSizePerChunk == null || minTotalMessageSizePerChunk.isEmpty()) {
+      return 268435456;
     }
-    return Integer.valueOf(maxBatchObjectSize);
+    return Long.valueOf(minTotalMessageSizePerChunk);
 
   }
 
@@ -116,9 +84,18 @@ public class PropertyConfiguration implements Configuration {
   public int getKafkaMaxMessageSize() {
     String maxMessageSize = props.getProperty(PROP_KAFKA_MAX_MESSAGE_SIZE);
     if (maxMessageSize == null || maxMessageSize.isEmpty()) {
-      return 256;
+      return 65536;
     }
     return Integer.valueOf(maxMessageSize);
 
+  }
+
+  @Override
+  public int getMaxCommitInterval() {
+      String maxCommitInterval = props.getProperty(PROP_S3_MAX_COMMIT_INTERVAL);
+      if (maxCommitInterval == null || maxCommitInterval.isEmpty()) {
+          return 86400000;
+      }
+      return Integer.valueOf(maxCommitInterval);
   }
 }
