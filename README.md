@@ -29,7 +29,9 @@ $ ./bundle.sh
 
 creates ./target/kafka-archiver.tgz
 
-### Run
+### Start
+
+A simple start script is provided to start the kafka-archiver daemon. This script will prevent the user from starting multiple instances of the archiver on one machine.
 
 ```
 $ tar xzf kafka-archiver.tgz
@@ -40,3 +42,14 @@ $ ./bin/kafka-archiver-start.sh
 ### Stop/Restart
 
 It is safe to just kill and restart the daemon. It will resume its operation where it left off.
+
+A stop script is provided for convenience. However, this script will ask for confirmation before killing the process.
+
+```
+$ ./bin/kafka-archiver-stop.sh
+Running kafka-archiver found:
+86051 s001  S      0:08.95 java -cp ./bin/../config:./bin/../lib/kafka-archiver.jar org.l1024.kafka.archiver.Archiver ...
+Kill archiver with pid 86051 ? [y/N]
+y
+$ ./bin/kafka-archiver-start.sh
+```

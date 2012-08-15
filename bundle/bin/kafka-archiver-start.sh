@@ -12,6 +12,11 @@
 
 base_dir=$(dirname $0)/..
 
+if [ ! -z "`${base_dir}/bin/kafka-archiver-test.sh`" ]; then
+  echo "Kafka-archiver already running. Please stop it first.";
+  exit 2;
+fi
+
 if [ -f "${base_dir}/config/kafka-archiver-env.sh" ]; then
   . "${base_dir}/config/kafka-archiver-env.sh"
 fi
