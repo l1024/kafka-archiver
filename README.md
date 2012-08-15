@@ -2,8 +2,8 @@ kafka-archiver
 ==============
 
 Archive Kafka messages into sequence files in S3.
-All messages of on topic will be stored in sequence files under one directory. Each sequence file will contain a chunk of messages.
-Key will be 'topic.brokerId.partitionId.offset' stored as Text. Value will be the binary message content stored as BytesWritable.
+All messages of a topic will be stored in sequence files under one directory. Each sequence file will contain a chunk of messages.
+Key will be '&lt;topic>.&lt;brokerId>.&lt;partitionId>.&lt;offset>' stored as Text. Value will be the binary message content stored as BytesWritable.
 
 Configurable options
 --------------------
@@ -14,12 +14,12 @@ Configurable options
 
 With 'mybucket' and 'myarchive' configured as s3 bucket/prefix you will end up with the following files in s3:
 
-mybucket/myarchive/<topic>/<broker_id>_<partition_id>_<start_offset>_<end_offset>
+s3://mybucket/myarchive/&lt;topic>/&lt;broker_id>_&lt;partition_id>_&lt;start_offset>_&lt;end_offset>
 
 Build
 -----
 ```
-$ cd <project root>
+$ cd  &lt;project root>
 edit config files in ./bundle/config as appropriate
 $ ./bundle.sh
 ```
