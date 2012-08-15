@@ -14,12 +14,12 @@ Configurable options
 
 With 'mybucket' and 'myarchive' configured as s3 bucket/prefix you will end up with the following files in s3:
 
-s3://mybucket/myarchive/&lt;topic>/&lt;broker_id>_&lt;partition_id>_&lt;start_offset>_&lt;end_offset>
+s3://mybucket/myarchive/&lt;topic>/&lt;broker\_id>\_&lt;partition\_id>\_&lt;start\_offset>\_&lt;end\_offset>
 
 Build
 -----
 ```
-$ cd  &lt;project root>
+$ cd <project root>
 edit config files in ./bundle/config as appropriate
 $ ./bundle.sh
 ```
