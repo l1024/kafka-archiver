@@ -4,7 +4,7 @@
 
 Archive Kafka messages into sequence files in S3.
 All messages of a topic will be stored in sequence files under one directory. Each sequence file will contain a chunk of messages.
-Key will be '&lt;topic>.&lt;brokerId>.&lt;partitionId>.&lt;offset>' stored as Text. Value will be the binary message content stored as BytesWritable.
+Key will be '&lt;topic>:&lt;brokerId>:&lt;partitionId>:&lt;offset>' stored as Text. Value will be the binary message content stored as BytesWritable.
 
 ### Configurable options
 - topics which should be archived

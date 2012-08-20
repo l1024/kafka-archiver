@@ -191,7 +191,7 @@ public class S3Sink implements Sink {
 
         public void appendMessageToChunk(MessageAndOffset messageAndOffset) throws IOException {
 
-            key.set(String.format("%s.%d.%d.%d", partition.getTopic(), partition.getBrokerId(), partition.getPartitionId(), messageAndOffset.offset()));
+            key.set(String.format("%s:%d:%d:%d", partition.getTopic(), partition.getBrokerId(), partition.getPartitionId(), messageAndOffset.offset()));
 
             int messageSize = messageAndOffset.message().payload().remaining();
             totalMessageCount += 1;

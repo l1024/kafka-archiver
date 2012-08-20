@@ -37,7 +37,7 @@ public class S3SinkTest extends TestCase {
     @Test
     public void testChunk() throws IOException {
 
-        Partition partition = new Partition("test-topic", 3, 2);
+        Partition partition = new Partition("topic.test", 3, 2);
         new ByteBufferMessageSet(Arrays.asList(new Message(message1), new Message(message2)));
         S3Sink.Chunk chunk = new S3Sink.Chunk(partition, 42L);
 
@@ -69,10 +69,10 @@ public class S3SinkTest extends TestCase {
         Text key = new Text();
         BytesWritable value = new BytesWritable();
         assertTrue(reader.next(key, value));
-        assertEquals("test-topic.3.2.72", key.toString());
+        assertEquals("topic.test:3:2:72", key.toString());
         assertEquals("message_1", new String(value.getBytes(), 0, value.getLength(), "UTF-8"));
         assertTrue(reader.next(key, value));
-        assertEquals("test-topic.3.2.102", key.toString());
+        assertEquals("topic.test:3:2:102", key.toString());
         assertEquals("message_2", new String(value.getBytes(), 0, value.getLength(), "UTF-8"));
         assertFalse(reader.next(key, value));
         chunk.cleanUp();
