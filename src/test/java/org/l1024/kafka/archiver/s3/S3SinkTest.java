@@ -12,6 +12,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
+import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.l1024.kafka.archiver.Partition;
 import org.l1024.kafka.archiver.Sink;
@@ -30,6 +31,8 @@ import java.util.UUID;
  * To change this template use File | Settings | File Templates.
  */
 public class S3SinkTest extends TestCase {
+
+    private static final Logger logger = Logger.getLogger(S3SinkTest.class);
 
     private static final byte[] message1 = {'m', 'e', 's', 's', 'a', 'g', 'e', '_', '1'};
     private static final byte[] message2 = {'m', 'e', 's', 's', 'a', 'g', 'e', '_', '2'};
@@ -85,6 +88,12 @@ public class S3SinkTest extends TestCase {
         String s3SecretKey= System.getProperty("s3.secretKey");
         String bucket=System.getProperty("s3.bucket");
         String prefix=System.getProperty("s3.prefix");
+
+        if (s3AccessKey == null || s3SecretKey == null || bucket == null || prefix == null) {
+            logger.warn("Skipping test testSink. Please check test configuration in build.sbt.");
+            assertTrue(true);
+            return;
+        }
 
         Partition partition = new Partition("unit_test_topic_" + UUID.randomUUID().toString().replace("-", ""), 3, 2);
 

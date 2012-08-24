@@ -2,22 +2,18 @@
 
 # paths
 base_dir=$(dirname $0)
-bundletmpdir=${base_dir}/bundle/tmp
+bundletmpdir=`mktemp -d -t "kafka-archiver-bundle"`
 bundleroot=${bundletmpdir}/kafka-archiver
 
-jar_file=${base_dir}/target/kafka-s3-consumer-1.0.jar
+jar_file=${base_dir}/target/kafka-archiver-assembly-0.1-SNAPSHOT.jar
 
 # package jar
-mvn clean package
+./sbt assembly
 
-# clean up
-rm -rf ${bundletmpdir}
+echo "Creating bundle in tmpdir: ${bundletmpdir}"
 
 # prepare
-mkdir ${bundletmpdir}
-mkdir ${bundleroot}
-
-for dir in bin config lib log; do
+for dir in '' 'lib' 'log'; do
   mkdir ${bundleroot}/${dir}
 done
 
@@ -36,3 +32,7 @@ echo "bundling archive"
 tar -czf ${base_dir}/target/kafka-archiver.tgz -C ${bundletmpdir} kafka-archiver
 
 echo "created bundle in ${base_dir}/target/kafka-archiver.tgz"
+
+# cleanup
+rm -rf ${bundletmpdir}
+
