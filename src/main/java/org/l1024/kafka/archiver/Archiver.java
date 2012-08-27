@@ -105,7 +105,7 @@ public class Archiver implements ArchiverMBean {
 
     }
 
-    public static class ThreadContainer {
+    private static class ThreadContainer {
 
         private Partition partition;
         private WorkerFactory workerFactory;
@@ -125,7 +125,7 @@ public class Archiver implements ArchiverMBean {
         }
 
         public boolean maintain() throws IOException {
-            boolean restart = !thread.isAlive();
+            boolean restart = !thread.isAlive() && !worker.isFinished();
             if (restart) {
                 logger.info(String.format("Thread (%s) died. Recreating worker. (%s)", thread, partition));
                 createThread();
@@ -145,6 +145,15 @@ public class Archiver implements ArchiverMBean {
         public String toString() {
             return String.format("ThreadContainer(partition=%s,worker=%s)", partition, worker);
         }
+
+        private static class ExceptionHandler implements Thread.UncaughtExceptionHandler {
+
+            @Override
+            public void uncaughtException(Thread t, Throwable e) {
+                logger.error(e);
+            }
+        }
+
     }
 
     private static class ArchivingWorker implements Runnable {
@@ -154,6 +163,7 @@ public class Archiver implements ArchiverMBean {
         private SinkFactory sinkFactory;
         long minTotalMessageSizePerChunk;
         int maxCommitInterval;
+        private boolean finished = false;
 
         private Sink sink;
         private MessageStream messages;
@@ -189,10 +199,17 @@ public class Archiver implements ArchiverMBean {
                         sink.commitChunk();
                     }
                 }
+
+                finished = true;
+
                 logger.info(toString() + " finished.");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        public boolean isFinished() {
+            return finished;
         }
 
         @Override
@@ -222,14 +239,6 @@ public class Archiver implements ArchiverMBean {
         public ArchivingWorker createWorker(Partition partition) {
 
             return new ArchivingWorker(partition, messageStreamFactory, sinkFactory, minTotalMessageSizePerChunk, maxCommitInterval);
-        }
-    }
-
-    private static class ExceptionHandler implements Thread.UncaughtExceptionHandler {
-
-        @Override
-        public void uncaughtException(Thread t, Throwable e) {
-            logger.error(e);
         }
     }
 
