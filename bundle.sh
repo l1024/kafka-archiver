@@ -8,7 +8,7 @@ bundleroot=${bundletmpdir}/kafka-archiver
 jar_file=${base_dir}/target/kafka-archiver-assembly-0.1-SNAPSHOT.jar
 
 # package jar
-./sbt assembly
+sbt/sbt assembly
 
 echo "Creating bundle in tmpdir: ${bundletmpdir}"
 
