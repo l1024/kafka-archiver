@@ -27,7 +27,7 @@ public class SinkFactory {
         this.s3Prefix = s3Prefix;
     }
 
-    public S3Sink createSink(Partition partition) throws IOException {
+    public S3Sink createSink(Partition partition, long minAvailableOffset) throws IOException {
 
         AmazonS3Client s3Client = new AmazonS3Client(new BasicAWSCredentials(s3AccessKey, s3SecretKey));
 
@@ -35,7 +35,8 @@ public class SinkFactory {
                 s3Client,
                 s3Bucket,
                 s3Prefix,
-                partition
+                partition,
+                minAvailableOffset
         );
     }
 

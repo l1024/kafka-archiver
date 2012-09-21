@@ -43,7 +43,9 @@ public class S3Sink implements Sink {
             AmazonS3Client s3Client,
             String bucket,
             String keyPrefix,
-            Partition partition) throws IOException {
+            Partition partition,
+            long minAvailableOffset
+    ) throws IOException {
 
         this.s3Client = s3Client;
 
@@ -51,7 +53,7 @@ public class S3Sink implements Sink {
         this.keyPrefix = keyPrefix + "/" + partition.getTopic() + "/" + partition.getBrokerId() + "_" + partition.getPartitionId() + "_";
 
         this.partition = partition;
-        maxCommittedOffset = fetchLastCommittedOffset();
+        maxCommittedOffset = Math.max(minAvailableOffset, fetchLastCommittedOffset());
 
         lastCommitTimestamp = System.currentTimeMillis();
 

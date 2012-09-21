@@ -16,6 +16,7 @@ public class PropertyConfiguration extends Configuration {
   private static final String PROP_S3_MAX_COMMIT_INTERVAL = "s3.maxcommitinterval";
   private static final String PROP_KAFKA_MAX_MESSAGE_SIZE = "kafka.maxmessagesize";
   private static final String PROP_KAFKA_TOPICS = "kafka.topics";
+  private static final String PROP_IGNORE_GAPS_TOPICS = "kafka.ignoregaps";
 
   public PropertyConfiguration(Properties props) {
     this.props = props;
@@ -66,6 +67,18 @@ public class PropertyConfiguration extends Configuration {
     }
     for (String topic: kafkaTopics.split(",")) {
       result.add(topic);
+    }
+    return result;
+  }
+
+  @Override
+  public Set<String> getIgnoreGapsTopics() {
+    Set<String> result = new HashSet<String>();
+    String kafkaIgnoreGapsTopics = props.getProperty(PROP_IGNORE_GAPS_TOPICS);
+    if (kafkaIgnoreGapsTopics != null) {
+        for (String topic: kafkaIgnoreGapsTopics.split(",")) {
+            result.add(topic);
+        }
     }
     return result;
   }

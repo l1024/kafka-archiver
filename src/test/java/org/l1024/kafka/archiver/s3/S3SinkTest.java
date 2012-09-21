@@ -101,7 +101,7 @@ public class S3SinkTest extends TestCase {
         long endOffset = 20L;
 
         SinkFactory sinkFactory = new SinkFactory(s3AccessKey, s3SecretKey, bucket, prefix);
-        Sink sink = sinkFactory.createSink(partition);
+        Sink sink = sinkFactory.createSink(partition,startOffset);
         assertEquals(0L, sink.getMaxCommittedOffset());
         sink.append(new MessageAndOffset(new Message(message1), endOffset));
         sink.commitChunk();
@@ -114,8 +114,46 @@ public class S3SinkTest extends TestCase {
         assertEquals(bucket, obj.getBucketName());
         assertEquals(key, obj.getKey());
 
-        sink = sinkFactory.createSink(partition);
+        sink = sinkFactory.createSink(partition,startOffset);
         assertEquals(20L, sink.getMaxCommittedOffset());
+        s3Client.deleteObject(bucket, key);
+    }
+
+    @Test
+    public void testSinkStartOffset() throws IOException {
+
+        String s3AccessKey=System.getProperty("s3.accessKey");
+        String s3SecretKey= System.getProperty("s3.secretKey");
+        String bucket=System.getProperty("s3.bucket");
+        String prefix=System.getProperty("s3.prefix");
+
+        if (s3AccessKey == null || s3SecretKey == null || bucket == null || prefix == null) {
+            logger.warn("Skipping test testSink. Please check test configuration in build.sbt.");
+            assertTrue(true);
+            return;
+        }
+
+        Partition partition = new Partition("unit_test_topic_" + UUID.randomUUID().toString().replace("-", ""), 3, 2);
+
+        long startOffset = 40L;
+        long endOffset = 60L;
+
+        SinkFactory sinkFactory = new SinkFactory(s3AccessKey, s3SecretKey, bucket, prefix);
+        Sink sink = sinkFactory.createSink(partition,startOffset);
+        assertEquals(40L, sink.getMaxCommittedOffset());
+        sink.append(new MessageAndOffset(new Message(message1), endOffset));
+        sink.commitChunk();
+
+        AmazonS3Client s3Client = new AmazonS3Client(new BasicAWSCredentials(s3AccessKey, s3SecretKey));
+        String key = prefix + "/" + partition.getTopic() + "/" + partition.getBrokerId() + "_" + partition.getPartitionId() + "_0000000000000000040_0000000000000000060";
+        S3Object obj = s3Client.getObject(bucket, key);
+
+        assertNotNull(obj);
+        assertEquals(bucket, obj.getBucketName());
+        assertEquals(key, obj.getKey());
+
+        sink = sinkFactory.createSink(partition,startOffset);
+        assertEquals(60L, sink.getMaxCommittedOffset());
         s3Client.deleteObject(bucket, key);
     }
 }

@@ -30,18 +30,6 @@ public class Archiver implements ArchiverMBean {
     }
 
     public void start() throws IOException, InterruptedException {
-        logger.info(String.format(
-                "Starting workers to archive kafka topics:\n"
-                        + "  brokerId:       %d\n"
-                        + "  bucket/key:     %s/%s\n"
-                        + "  topics:         %s\n"
-                        + "  chunkSize:      %d\n"
-                        + "  commitInterval: %d",
-                kafkaConfig.brokerId(),
-                configuration.getS3Bucket(), configuration.getS3Prefix(),
-                configuration.getTopics(),
-                configuration.getMinTotalMessageSizePerChunk(),
-                configuration.getMaxCommitInterval()));
 
         int brokerId = kafkaConfig.brokerId();
         String kafkaHost;
@@ -58,6 +46,27 @@ public class Archiver implements ArchiverMBean {
             kafkaPort = kafkaConfig.port();
         }
 
+        logger.info(String.format(
+                "Starting workers to archive kafka topics:\n"
+                        + "  host:           %s\n"
+                        + "  port:           %d\n"
+                        + "  brokerId:       %d\n"
+                        + "  bucket/key:     %s/%s\n"
+                        + "  topics:         %s\n"
+                        + "  chunkSize:      %d\n"
+                        + "  commitInterval: %d\n"
+                        + "  ignoregaps:     %s"
+                ,
+                kafkaHost,
+                kafkaPort,
+                kafkaConfig.brokerId(),
+                configuration.getS3Bucket(), configuration.getS3Prefix(),
+                configuration.getTopics(),
+                configuration.getMinTotalMessageSizePerChunk(),
+                configuration.getMaxCommitInterval(),
+                configuration.getIgnoreGapsTopics()
+        ));
+
         MessageStreamFactory messageStreamFactory =
                 new MessageStreamFactory(
                         kafkaHost,
@@ -73,7 +82,13 @@ public class Archiver implements ArchiverMBean {
                         configuration.getS3Prefix()
                 );
 
-        WorkerFactory workerFactory = new WorkerFactory(messageStreamFactory, sinkFactory, configuration.getMinTotalMessageSizePerChunk(), configuration.getMaxCommitInterval());
+        WorkerFactory workerFactory = new WorkerFactory(
+                messageStreamFactory,
+                sinkFactory,
+                configuration.getMinTotalMessageSizePerChunk(),
+                configuration.getMaxCommitInterval(),
+                configuration.getIgnoreGapsTopics()
+        );
         threadContainers = new LinkedList<ThreadContainer>();
 
         for (String topic : configuration.getTopics()) {
@@ -150,7 +165,7 @@ public class Archiver implements ArchiverMBean {
 
             @Override
             public void uncaughtException(Thread t, Throwable e) {
-                logger.error(e);
+                logger.error("ThreadContainer: ", e);
             }
         }
 
@@ -164,16 +179,25 @@ public class Archiver implements ArchiverMBean {
         long minTotalMessageSizePerChunk;
         int maxCommitInterval;
         private boolean finished = false;
+        private boolean ignoreGaps;
 
         private Sink sink;
         private MessageStream messages;
 
-        private ArchivingWorker(Partition partition, MessageStreamFactory messageStreamFactory, SinkFactory sinkFactory, long minTotalMessageSizePerChunk, int maxCommitInterval) {
+        private ArchivingWorker(
+                Partition partition,
+                MessageStreamFactory messageStreamFactory,
+                SinkFactory sinkFactory,
+                long minTotalMessageSizePerChunk,
+                int maxCommitInterval,
+                boolean ignoreGaps
+        ) {
             this.partition = partition;
             this.messageStreamFactory = messageStreamFactory;
             this.sinkFactory = sinkFactory;
             this.minTotalMessageSizePerChunk = minTotalMessageSizePerChunk;
             this.maxCommitInterval = maxCommitInterval;
+            this.ignoreGaps = ignoreGaps;
         }
 
         @Override
@@ -181,7 +205,7 @@ public class Archiver implements ArchiverMBean {
 
             try {
 
-                sink = sinkFactory.createSink(partition);
+                sink = sinkFactory.createSink(partition, ignoreGaps ? messageStreamFactory.minAvailableOffset(partition) : 0L);
                 messages = messageStreamFactory.createMessageStream(partition, sink.getMaxCommittedOffset());
 
                 logger.info(String.format("Worker starts archiving messages from partition %s starting with offset %d", partition, sink.getMaxCommittedOffset()));
@@ -228,17 +252,32 @@ public class Archiver implements ArchiverMBean {
         private SinkFactory sinkFactory;
         private long minTotalMessageSizePerChunk;
         private int maxCommitInterval;
+        private Set<String> ignoreGapsTopics;
 
-        private WorkerFactory(MessageStreamFactory messageStreamFactory, SinkFactory sinkFactory, long minTotalMessageSizePerChunk, int maxCommitInterval) {
+        private WorkerFactory(
+                MessageStreamFactory messageStreamFactory,
+                SinkFactory sinkFactory,
+                long minTotalMessageSizePerChunk,
+                int maxCommitInterval,
+                Set<String> ignoreGapsTopics
+        ) {
             this.messageStreamFactory = messageStreamFactory;
             this.sinkFactory = sinkFactory;
             this.minTotalMessageSizePerChunk = minTotalMessageSizePerChunk;
             this.maxCommitInterval = maxCommitInterval;
+            this.ignoreGapsTopics = ignoreGapsTopics;
         }
 
         public ArchivingWorker createWorker(Partition partition) {
 
-            return new ArchivingWorker(partition, messageStreamFactory, sinkFactory, minTotalMessageSizePerChunk, maxCommitInterval);
+            return new ArchivingWorker(
+                    partition,
+                    messageStreamFactory,
+                    sinkFactory,
+                    minTotalMessageSizePerChunk,
+                    maxCommitInterval,
+                    ignoreGapsTopics.contains(partition.getTopic())
+            );
         }
     }
 

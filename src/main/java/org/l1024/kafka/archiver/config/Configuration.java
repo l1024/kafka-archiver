@@ -41,6 +41,7 @@ public abstract class Configuration {
     public abstract String getS3Prefix();
 
     public abstract Set<String> getTopics();
+    public abstract Set<String> getIgnoreGapsTopics();
 
     public abstract long getMinTotalMessageSizePerChunk();
     public abstract int getKafkaMaxMessageSize();

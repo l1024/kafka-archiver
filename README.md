@@ -11,6 +11,7 @@ Key will be '&lt;topic>:&lt;brokerId>:&lt;partitionId>:&lt;offset>' stored as Te
 - total message size per chunk
 - s3 bucket/prefix
 - maximum interval between chunk uploads
+- ignore gaps setting per topic (by default the archiver fails, if there is a gap in the message stream)
 
 With 'mybucket' and 'myarchive' configured as s3 bucket/prefix you will end up with the following files in s3:
 

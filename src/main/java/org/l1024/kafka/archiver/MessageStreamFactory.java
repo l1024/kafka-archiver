@@ -32,4 +32,10 @@ public class MessageStreamFactory {
                 maxMessageSize
         );
     }
+
+    public long minAvailableOffset(Partition partition) {
+        SimpleConsumer consumer = new SimpleConsumer(kafkaHost, kafkaPort, 5000, 4*1024);
+
+        return consumer.getOffsetsBefore(partition.getTopic(), partition.getPartitionId(), -2, 1)[0];
+    }
 }
