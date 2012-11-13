@@ -2,6 +2,7 @@ package org.l1024.kafka.archiver.s3;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import kafka.message.MessageAndOffset;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -108,21 +109,29 @@ public class S3Sink implements Sink {
 
     private long fetchLastCommittedOffset() {
 
-        List<S3ObjectSummary> objectSummaries =
+        ObjectListing objectListing = null;
+
+        long maxOffset = 0;
+
+        while (objectListing == null || objectListing.isTruncated()) {
+
+            objectListing =
                 s3Client.listObjects(
                         new ListObjectsRequest()
                                 .withBucketName(bucket)
                                 .withDelimiter("/")
                                 .withPrefix(keyPrefix)
-                ).getObjectSummaries();
+                                .withMarker(objectListing == null ? null : objectListing.getNextMarker())
+                );
 
-        long maxOffset = 0;
+            List<S3ObjectSummary> objectSummaries = objectListing.getObjectSummaries();
 
-        for (S3ObjectSummary objectSummary : objectSummaries) {
-            String[] offsets = objectSummary.getKey().substring(keyPrefix.length()).split("_");
-            long endOffset = Long.valueOf(offsets[1]);
-            if (endOffset > maxOffset)
-                maxOffset = endOffset;
+            for (S3ObjectSummary objectSummary : objectSummaries) {
+                String[] offsets = objectSummary.getKey().substring(keyPrefix.length()).split("_");
+                long endOffset = Long.valueOf(offsets[1]);
+                if (endOffset > maxOffset)
+                    maxOffset = endOffset;
+            }
         }
         return maxOffset;
     }
